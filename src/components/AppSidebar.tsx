@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  User,
   LayoutDashboard,
   History,
   AlertTriangle,
@@ -23,7 +22,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Profile", url: "/profile", icon: User },
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "History & Logs", url: "/history", icon: History },
   { title: "Alerts", url: "/alerts", icon: AlertTriangle },
