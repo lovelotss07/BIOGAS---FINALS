@@ -20,11 +20,11 @@ import {
 
 // Mock real-time data generation
 const generateMockData = () => ({
-  temperature: Math.random() * 10 + 35, // 35-45°C
-  ph: Math.random() * 2 + 6.5, // 6.5-8.5 pH
-  pressure: Math.random() * 5 + 8, // 8-13 kPa
-  gasStorage: Math.random() * 30 + 60, // 60-90%
-  wasteInput: Math.random() * 40 + 40, // 40-80%
+  temperature: Math.random() * 6 + 37, // 37-43°C (more focused on optimal range)
+  ph: Math.random() * 1.2 + 6.8, // 6.8-8.0 pH (tighter optimal range)
+  pressure: Math.random() * 3 + 9, // 9-12 kPa (more stable range)
+  gasStorage: Math.random() * 20 + 70, // 70-90% (higher baseline)
+  wasteInput: Math.random() * 30 + 50, // 50-80% (more realistic range)
   timestamp: new Date().toLocaleTimeString()
 });
 
@@ -80,7 +80,6 @@ export function BiogasDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Biogas Monitoring System</h1>
-          <p className="text-muted-foreground">Real-time monitoring of biogas digester system</p>
         </div>
         <Badge variant="outline" className="bg-success/10 text-success border-success">
           System Online
@@ -102,11 +101,11 @@ export function BiogasDashboard() {
                   tempStatus === "success"
                     ? "default"
                     : tempStatus === "warning"
-                    ? "destructive" // Make warning red
+                    ? "secondary"
                     : "destructive"
                 }
                 className={
-                  `text-xs ${tempStatus === "warning" ? "bg-red-500 text-white border-red-500" : ""}`
+                  `text-xs ${tempStatus === "warning" ? "bg-yellow-500 text-white border-yellow-500" : ""}`
                 }
               >
                 {getStatusIcon(tempStatus)}
@@ -178,7 +177,15 @@ export function BiogasDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{currentData.gasStorage.toFixed(0)}%</div>
             <Progress value={currentData.gasStorage} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">Storage tank level</p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-muted-foreground">Storage tank level</p>
+              <Badge
+                variant={currentData.gasStorage > 85 ? "destructive" : currentData.gasStorage > 75 ? "secondary" : "default"}
+                className="text-xs"
+              >
+                {currentData.gasStorage > 85 ? "High" : currentData.gasStorage > 75 ? "Moderate" : "Normal"}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
 
@@ -190,7 +197,15 @@ export function BiogasDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{currentData.wasteInput.toFixed(0)}%</div>
             <Progress value={currentData.wasteInput} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">Digester fill level</p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-muted-foreground">Digester fill level</p>
+              <Badge
+                variant={currentData.wasteInput > 75 ? "destructive" : currentData.wasteInput > 65 ? "secondary" : "default"}
+                className="text-xs"
+              >
+                {currentData.wasteInput > 75 ? "High" : currentData.wasteInput > 65 ? "Moderate" : "Normal"}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
       </div>

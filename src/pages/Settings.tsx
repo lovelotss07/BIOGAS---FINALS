@@ -28,15 +28,11 @@ export default function Settings() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">System Settings</h1>
-          <p className="text-muted-foreground">Configure monitoring parameters and system preferences</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="bg-success/10 text-success border-success">
-            Configuration Saved
-          </Badge>
+        <div className="flex items-center">
           <button
             type="button"
-            className="ml-2 p-2 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="p-2 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary"
             title="User Guide: How to use this website"
             onClick={() => setShowGuide(true)}
           >

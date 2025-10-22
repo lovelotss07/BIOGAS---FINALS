@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Download, TrendingUp, BarChart2 } from "lucide-react";
+import { Calendar, TrendingUp, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Demo: Generate mock weekly data and logs for any week
@@ -34,21 +34,37 @@ function getWeeklyData(weekStart: Date, today: Date) {
 }
 
 function getSystemLogs(weekStart: Date, selectedDate?: Date, today?: Date) {
-  // Only show logs if selectedDate is today or before
-  const base = weekStart.getDate() + (selectedDate ? selectedDate.getDate() : 0);
+  if (!selectedDate || !today) return [];
+
+  // Create new Date objects to avoid mutating the original dates
+  const normalizedSelectedDate = new Date(selectedDate);
+  const normalizedToday = new Date(today);
+  normalizedSelectedDate.setHours(0, 0, 0, 0);
+  normalizedToday.setHours(0, 0, 0, 0);
+
+  // Return empty array for future dates
+  if (normalizedSelectedDate.getTime() > normalizedToday.getTime()) {
+    return [];
+  }
+
   const statusArr = ["success", "warning", "info", "success", "info"];
   const eventsArr = [
     "System startup", "Temperature spike", "pH adjustment", "Gas collection", "Waste input"
   ];
-  if (selectedDate && today && selectedDate.setHours(0,0,0,0) > today.setHours(0,0,0,0)) {
-    return [];
-  }
-  return Array.from({ length: 5 }).map((_, i) => ({
-    time: `${9 + i}:15 AM`,
-    event: eventsArr[i],
-    status: statusArr[(base + i) % statusArr.length],
-    details: `Log for ${selectedDate ? selectedDate.toLocaleDateString('en-US') : 'week'}: ${eventsArr[i]}`
-  }));
+
+  // Generate deterministic but varying number of logs based on date
+  const numLogs = ((selectedDate.getDate() + selectedDate.getMonth()) % 3) + 3; // 3-5 logs per day
+
+  return Array.from({ length: numLogs }).map((_, i) => {
+    const hour = 8 + i * 2; // Spread events throughout the day
+    const minute = ((selectedDate.getDate() * (i + 1)) % 60).toString().padStart(2, '0');
+    return {
+      time: `${hour}:${minute} ${hour < 12 ? 'AM' : 'PM'}`,
+      event: eventsArr[i % eventsArr.length],
+      status: statusArr[i % statusArr.length],
+      details: `Log for ${selectedDate.toLocaleDateString('en-US')}: ${eventsArr[i % eventsArr.length]}`
+    };
+  });
 }
 
 function History() {
@@ -83,14 +99,20 @@ function History() {
   const handlePrevWeek = () => {
     const prev = new Date(weekStart);
     prev.setDate(weekStart.getDate() - 7);
-    setWeekStart(prev);
+    // Don't allow navigating too far back (e.g., limit to 1 year)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    if (prev >= oneYearAgo) {
+      setWeekStart(prev);
+    }
   };
   const handleNextWeek = () => {
-    // Allow next week if its start is <= today
     const next = new Date(weekStart);
     next.setDate(weekStart.getDate() + 7);
-    if (next > today) return;
-    setWeekStart(next);
+    // Only allow navigation up to the current week
+    if (next.getTime() <= today.getTime()) {
+      setWeekStart(next);
+    }
   };
 
   // Helper to get the date for a given day index in the week
@@ -121,18 +143,9 @@ function History() {
   };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">History & Logs</h1>
-          <p className="text-muted-foreground">Historical data and system event logs</p>
-        </div>
-        <Button variant="outline" className="flex items-center space-x-2">
-          <Download className="h-4 w-4" />
-          <span>Export Data</span>
-        </Button>
-      </div>
-
-      {/* Weekly Production Overview */}
+        </div>      {/* Weekly Production Overview */}
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
@@ -313,9 +326,13 @@ function History() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => {
-                    // Always set the date if a valid date is selected, regardless of click count
-                    if (date) setSelectedDate(date);
+                    // Only allow dates up to today
+                    if (date && date <= today) {
+                      setSelectedDate(date);
+                      setCalendarOpen(false);
+                    }
                   }}
+                  disabled={(date) => date > today}
                   initialFocus
                 />
               </PopoverContent>
@@ -324,21 +341,27 @@ function History() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {systemLogs.map((log, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="text-sm font-medium text-muted-foreground">{log.time}</div>
-                  <div className="text-sm font-medium">{log.event}</div>
-                  <Badge 
-                    variant={log.status === "success" ? "default" : log.status === "warning" ? "destructive" : "secondary"}
-                    className="text-xs"
-                  >
-                    {log.status}
-                  </Badge>
+            {systemLogs.length > 0 ? (
+              systemLogs.map((log, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-sm font-medium text-muted-foreground">{log.time}</div>
+                    <div className="text-sm font-medium">{log.event}</div>
+                    <Badge 
+                      variant={log.status === "success" ? "default" : log.status === "warning" ? "destructive" : "secondary"}
+                      className="text-xs"
+                    >
+                      {log.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground">{log.details}</div>
                 </div>
-                <div className="text-sm text-muted-foreground">{log.details}</div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No system logs available for this date</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>

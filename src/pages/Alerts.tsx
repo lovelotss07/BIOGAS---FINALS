@@ -76,7 +76,6 @@ export default function Alerts() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">System Alerts</h1>
-          <p className="text-muted-foreground">Monitor and manage system notifications and alerts</p>
         </div>
       </div>
 
